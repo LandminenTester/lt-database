@@ -18,6 +18,7 @@ internal static class DbClient
         new Operation("find", "/v1/data/find", true),
         new Operation("count", "/v1/data/count", true),
         new Operation("delete", "/v1/data/delete", true),           // same filter, same outcome
+        new Operation("flush", "/v1/data/flush", true),             // applies queued writes (API write-behind mode)
         new Operation("insert", "/v1/data/insert", false),          // retried only with an idempotencyKey
         new Operation("upsert", "/v1/data/upsert", false),
         new Operation("update", "/v1/data/update", false),

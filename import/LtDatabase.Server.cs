@@ -51,10 +51,10 @@ public static class Db
     // ---- data
 
     /// <summary>Rows are JSON objects, see <see cref="Q.Row"/>. A fresh idempotency key makes retries after a timeout safe.</summary>
-    public static DbTicket Insert(string ns, string table, string[] rowsJson, Action<DbResult> done) =>
-        Call("insert", JsonText.Object(("namespace", ns), ("table", table), ("rows", new JsonText.Raw("[" + string.Join(",", rowsJson) + "]")), ("idempotencyKey", Ids.Next())), done);
+    public static DbTicket Insert(string ns, string table, string[] rowsJson, Action<DbResult> done, bool immediate = false) =>
+        Call("insert", Write(JsonText.Object(("namespace", ns), ("table", table), ("rows", new JsonText.Raw("[" + string.Join(",", rowsJson) + "]")), ("idempotencyKey", Ids.Next())), immediate), done);
 
-    public static DbTicket Insert(string ns, string table, string rowJson, Action<DbResult> done) => Insert(ns, table, [rowJson], done);
+    public static DbTicket Insert(string ns, string table, string rowJson, Action<DbResult> done, bool immediate = false) => Insert(ns, table, [rowJson], done, immediate);
 
     public static DbTicket Find(string ns, string table, Action<DbResult> done, string? filterJson = null, string[]? fields = null, string? sortJson = null, int? limit = null, int? offset = null)
     {
@@ -71,20 +71,28 @@ public static class Db
         Call("count", filterJson is null ? JsonText.Object(("namespace", ns), ("table", table)) : JsonText.Object(("namespace", ns), ("table", table), ("filter", new JsonText.Raw(filterJson))), done);
 
     /// <summary>Change rows that match <paramref name="filterJson"/>. <paramref name="setJson"/> replaces values, <paramref name="incJson"/> adds to numbers.</summary>
-    public static DbTicket Update(string ns, string table, string filterJson, Action<DbResult> done, string? setJson = null, string? incJson = null)
+    public static DbTicket Update(string ns, string table, string filterJson, Action<DbResult> done, string? setJson = null, string? incJson = null, bool immediate = false)
     {
         var parts = new List<(string, object?)> { ("namespace", ns), ("table", table), ("filter", new JsonText.Raw(filterJson)) };
         if (setJson is not null) parts.Add(("set", new JsonText.Raw(setJson)));
         if (incJson is not null) parts.Add(("inc", new JsonText.Raw(incJson)));
-        return Call("update", JsonText.Object([.. parts]), done);
+        return Call("update", Write(JsonText.Object([.. parts]), immediate), done);
     }
 
     /// <summary>Insert the row, or update the existing row with the same key. <paramref name="keys"/> must be the primary key or a unique index.</summary>
-    public static DbTicket Upsert(string ns, string table, string rowJson, string[] keys, Action<DbResult> done) =>
-        Call("upsert", JsonText.Object(("namespace", ns), ("table", table), ("row", new JsonText.Raw(rowJson)), ("keys", new JsonText.Raw(JsonText.Array(keys))), ("idempotencyKey", Ids.Next())), done);
+    public static DbTicket Upsert(string ns, string table, string rowJson, string[] keys, Action<DbResult> done, bool immediate = false) =>
+        Call("upsert", Write(JsonText.Object(("namespace", ns), ("table", table), ("row", new JsonText.Raw(rowJson)), ("keys", new JsonText.Raw(JsonText.Array(keys))), ("idempotencyKey", Ids.Next())), immediate), done);
 
-    public static DbTicket Delete(string ns, string table, string filterJson, Action<DbResult> done) =>
-        Call("delete", JsonText.Object(("namespace", ns), ("table", table), ("filter", new JsonText.Raw(filterJson))), done);
+    public static DbTicket Delete(string ns, string table, string filterJson, Action<DbResult> done, bool immediate = false) =>
+        Call("delete", Write(JsonText.Object(("namespace", ns), ("table", table), ("filter", new JsonText.Raw(filterJson))), immediate), done);
+
+    /// <summary>
+    /// Applies the namespace's queued writes now. Only meaningful when the API owner turned on write-behind; otherwise it does nothing.
+    /// The result is {"flushed":n,"deadLettered":m,"remaining":k,"halted":false,"enabled":true}.
+    /// </summary>
+    public static DbTicket Flush(string ns, Action<DbResult> done) => Call("flush", JsonText.Object(("namespace", ns)), done);
+
+    static string Write(string payloadJson, bool immediate) => immediate ? Q.Immediate(payloadJson) : payloadJson;
 
     public static DbTicket Health(Action<DbResult> done) => Call("health", "{}", done);
 
@@ -99,6 +107,13 @@ public static class Db
             foreach (var item in list) if (MiniJson.AsObject(item) is { } row) rows.Add(row);
         return rows;
     }
+
+    /// <summary>
+    /// True if the API only queued the write (write-behind mode). A queued write has no generated ids and no affected count yet,
+    /// and is visible to reads after the next flush.
+    /// </summary>
+    public static bool IsQueued(DbResult result) =>
+        result.State == "ok" && MiniJson.TryParse(result.Json, out var parsed) && MiniJson.GetBool(MiniJson.AsObject(parsed), "queued") == true;
 
     /// <summary>True if more rows exist than the limit allowed.</summary>
     public static bool HasMore(DbResult result) =>

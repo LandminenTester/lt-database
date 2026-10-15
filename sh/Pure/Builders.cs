@@ -29,6 +29,18 @@ public static class Q
     /// <summary>A row or a "set"/"inc" object: Q.Row(("name", "alice"), ("score", 10)).</summary>
     public static string Row(params (string Column, object? Value)[] values) => JsonText.Object(values);
 
+    /// <summary>
+    /// Marks one write as "durability":"immediate", which makes the API run it live even in a namespace it buffers (write-behind).
+    /// The text is spliced into the object before its closing brace, so no JSON has to be parsed.
+    /// </summary>
+    public static string Immediate(string payloadJson)
+    {
+        var end = payloadJson.TrimEnd();
+        if (end.Length < 2 || end[^1] != '}') throw new ArgumentException("The payload must be a JSON object.", nameof(payloadJson));
+        var body = end[..^1].TrimEnd();
+        return body + (body.EndsWith('{') ? "" : ",") + "\"durability\":\"immediate\"}";
+    }
+
     public static string Sort(params (string Column, bool Descending)[] order) =>
         "[" + string.Join(",", order.Select(o => JsonText.Object(("field", o.Column), ("dir", o.Descending ? "desc" : "asc")))) + "]";
 }

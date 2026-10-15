@@ -253,3 +253,25 @@ public class BuilderTests
         Assert.Equal("asc", doc.RootElement[1].GetProperty("dir").GetString());
     }
 }
+
+public class WriteBehindHelperTests
+{
+    [Fact]
+    public void Immediate_adds_the_durability_field_and_keeps_the_payload_valid()
+    {
+        var payload = JsonText.Object(("namespace", "demo"), ("table", "t"), ("rows", new JsonText.Raw("[{\"a\":1}]")));
+        using var doc = JsonDocument.Parse(Q.Immediate(payload));
+        Assert.Equal("immediate", doc.RootElement.GetProperty("durability").GetString());
+        Assert.Equal("demo", doc.RootElement.GetProperty("namespace").GetString());
+        Assert.Equal(1, doc.RootElement.GetProperty("rows")[0].GetProperty("a").GetInt32());
+    }
+
+    [Fact]
+    public void Immediate_works_on_an_empty_object_and_refuses_anything_else()
+    {
+        using var doc = JsonDocument.Parse(Q.Immediate("{}"));
+        Assert.Equal("immediate", doc.RootElement.GetProperty("durability").GetString());
+        Assert.Throws<ArgumentException>(() => Q.Immediate("[1]"));
+        Assert.Throws<ArgumentException>(() => Q.Immediate(""));
+    }
+}
