@@ -11,7 +11,7 @@ if wasm.read_bytes()[:8] not in (b"\x00asm\x01\x00\x00\x00", b"\x00asm\x0d\x00\x
     raise SystemExit("dist/sv.wasm is not a WebAssembly module/component; run the Release WASM build first")
 out = root / "release"
 out.mkdir(exist_ok=True)
-archive = out / f"lt-database-{version}.zip"
+archive = out / f"lt_database-{version}.zip"
 with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
     for src, dest in [
         ("data/config.toml", "config.toml"), ("dist/sv.wasm", "sv.wasm"),

@@ -11,7 +11,7 @@
 
 ## 1. Get the bundle
 
-Either download `lt-database-<version>.zip` from the releases page, or build it yourself ([Build](BUILD.md)). It contains
+Either download `lt_database-<version>.zip` from the releases page, or build it yourself ([Build](BUILD.md)). It contains
 
 ```
 config.toml        the manifest
@@ -34,11 +34,11 @@ The folder name becomes the bundle name. Unpack into the server's UGC directory:
 
 ### Folder name
 
-`lt_database` is the default name, and the helper `Db.Bundle` points at it. If you prefer another name (for example
-`lt-database`), unpack there and set it once at start-up of every consumer bundle:
+Install under `lt_database`; the helper `Db.Bundle` already points at it. If an installation deliberately uses a custom
+folder such as `my_database`, set that name once at start-up of every consumer bundle:
 
 ```csharp
-LtDatabaseClient.Db.Bundle = "lt-database";
+LtDatabaseClient.Db.Bundle = "my_database";
 ```
 
 Server and client consoles list bundles by folder name, so use the same name in `start <name>`.

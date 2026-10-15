@@ -1,4 +1,4 @@
-# lt-database
+# lt_database
 
 A database connector for [Replay.RE BlackICE](https://docs.replay.re) servers. Your server bundles call its exports to declare
 tables and to read, write, update and delete data in **PostgreSQL, MySQL/MariaDB or MongoDB**. The bundle itself never touches a
@@ -6,15 +6,14 @@ database: it talks to the standalone [lt-database-api](https://github.com/Landmi
 every request and verifying every answer.
 
 ```
-your server bundle ──re.Exports──▶ lt-database (this bundle) ──HTTPS, HMAC-signed──▶ lt-database-api ──▶ PostgreSQL | MySQL | MongoDB
+your server bundle ──re.Exports──▶ lt_database (this bundle) ──HTTPS, HMAC-signed──▶ lt-database-api ──▶ PostgreSQL | MySQL | MongoDB
 ```
 
 The BlackICE sandbox can only open HTTP connections to hosts listed in a bundle's manifest and has no database driver or
 writable database file. This bundle plus the API is the bridge.
 
-> **Naming.** The repository is called `lt-database`. The bundle was developed as `lt_database` for LandminenTester
-> servers, and that is still the default folder name and the default value of `Db.Bundle` in the helper. You can install it under
-> any folder name; just set `Db.Bundle` to it (see [Install](docs/INSTALL.md#folder-name)).
+Install the bundle as `lt_database`. Its public C# contracts use `LtDatabase`, and its consumer helper uses
+`LtDatabaseClient`. The console commands are `lt-db-status`, `lt-db-health` and `lt-db-reload`.
 
 ## What you get
 
@@ -32,7 +31,7 @@ writable database file. This bundle plus the API is the bridge.
 ## Five-minute start
 
 1. Run [lt-database-api](https://github.com/LandminenTester/lt-database-api) with your database and create a key for your server.
-2. Download `lt-database-<version>.zip` from the [releases](../../releases) (or [build it](docs/BUILD.md)) and unpack it as
+2. Download `lt_database-<version>.zip` from the [releases](../../releases) (or [build it](docs/BUILD.md)) and unpack it as
    `data/ugc/lt_database/` on the game server. Set your API host in its `config.toml` under `[Networking]`.
 3. Create `vfs/database.json` and `vfs/database.secret` next to it, and start the bundle: [Install](docs/INSTALL.md).
 4. Use it from your own server bundle:
@@ -81,7 +80,7 @@ Examples that compile: [`examples/consumer`](examples/consumer) (a small consume
 * Compiles to WASM with 0 warnings; the protocol code (crypto, JSON, signing, builders) has 39 tests on a normal .NET runtime,
   checked against `System.Security.Cryptography`, RFC 4231 and the API's published test vectors.
 * **Tested in a real BlackICE server** against PostgreSQL 17, MySQL 8.4 and MongoDB 8 through the API: all 38 steps of
-  `db-smoke` pass on each, and a real bundle (`chat_settings`) stores per-player settings through it.
+  `db-smoke` pass on each, and a real consumer stores per-player settings through it.
 * Not tested: several game servers at once, TLS between bundle and API (plain loopback HTTP was used), key rotation in a running
   server, MariaDB, write-behind from inside a game server (the API side is tested, the helper side by unit tests).
 

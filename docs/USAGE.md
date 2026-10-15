@@ -170,8 +170,7 @@ PlayerSettings.Save(playerKey, "{\"x\":120,\"y\":80,\"collapsed\":false}", ok =>
 PlayerSettings.Load(playerKey, doc => Console.WriteLine(doc?["x"]));
 ```
 
-Use a stable key (a hash of the player's identity, not the slot number). The `chat_settings` bundle stores the chat position
-this way.
+Use a stable key (a hash of the player's identity, not the slot number). Chat settings can be stored this way.
 
 ### Time-limited bans
 

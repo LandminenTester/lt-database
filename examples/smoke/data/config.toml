@@ -1,6 +1,6 @@
 [General]
 description = "Runtime smoke test for lt_database: console command db-smoke runs every connector function and prints PASS/FAIL per step."
-author = "LandminenTester | Landminen Tester"
+author = "LandminenTester"
 version = "0.1.0"
 
 [Scripting]

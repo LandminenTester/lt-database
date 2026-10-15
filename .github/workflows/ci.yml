@@ -25,7 +25,7 @@ jobs:
       - run: python scripts/package.py
       - uses: actions/upload-artifact@v4
         with:
-          name: lt-database
+          name: lt_database
           path: release/*
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -36,8 +36,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: lt-database
+          name: lt_database
           path: release
-      - run: gh release create "$GITHUB_REF_NAME" release/* --repo "$GITHUB_REPOSITORY" --generate-notes --title "lt-database ${GITHUB_REF_NAME#v}"
+      - run: gh release create "$GITHUB_REF_NAME" release/* --repo "$GITHUB_REPOSITORY" --generate-notes --title "lt_database ${GITHUB_REF_NAME#v}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
