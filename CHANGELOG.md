@@ -11,7 +11,7 @@ and database namespaces are unchanged.
 
 ## 0.1.0
 
-Initial public lt-database release: signed BlackICE database connector, schema/query builders, consumer helper and
+Initial public lt_database release: signed BlackICE database connector, schema/query builders, consumer helper and
 compiled recipes. Supports PostgreSQL, MySQL and MongoDB through lt-database-api. The helper includes `Db.IsQueued`,
 `Db.Flush` and `immediate: true` for the API's optional write-behind mode.
 
