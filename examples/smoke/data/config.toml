@@ -1,0 +1,10 @@
+[General]
+description = "Runtime smoke test for lt_database: console command db-smoke runs every connector function and prints PASS/FAIL per step."
+author = "LandminenTester | Landminen Tester"
+version = "0.1.0"
+
+[Scripting]
+server_blob = "sv.wasm"
+
+[Meta]
+config_version = "alpha_playtest"
