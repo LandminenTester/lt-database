@@ -1,0 +1,13 @@
+[General]
+description = "A fully working database connector that connects to the seperate database api that is hosted external to save and read persitent data for servers."
+author = "LandminenTester | Landminen Tester"
+version = "0.1.0"
+
+[Scripting]
+client_blob = "cl.wasm"
+server_blob = "sv.wasm"
+
+[ReUi]
+
+[Meta]
+config_version = "alpha_playtest"
