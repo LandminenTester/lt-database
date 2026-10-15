@@ -52,16 +52,17 @@ Functional test inside a real server: build [`examples/smoke`](../examples/smoke
 
 1. Update the version in `data/config.toml` (`[General] version`) and in the changelog if you keep one.
 2. `dotnet test` in `tests/Bundle.Tests`, `dotnet build sv/sv.csproj -c Release`, `dotnet build examples/consumer/consumer.csproj -c Release`.
-3. Create the zip:
+3. Create the ZIP with Python 3.11 or later (the packager checks the WASM header and includes only public files):
 
 ```bash
-mkdir release && cp dist/config.toml dist/sv.wasm release/ && mkdir release/vfs && cp vfs/database.example.json release/vfs/
-(cd release && zip -r ../lt-database-<version>.zip .)
+python scripts/package.py
 ```
 
-4. Tag and publish with `gh release create v<version> lt-database-<version>.zip --generate-notes`.
+4. Push a new `v<version>` tag. The workflow tests and builds the connector and both examples, packages the ZIP with
+   `SHA256SUMS.txt`, and publishes the GitHub release only after that build passes. Check both jobs before announcing it.
 
-The GitHub Actions workflow in `.github/workflows` runs the tests and the WASM build on every push.
+The GitHub Actions workflow in `.github/workflows` runs on main pushes, pull requests and version tags using Windows
+and .NET 10. It uploads the package as a CI artifact on ordinary builds. A CI build is not a BlackICE runtime test.
 
 ## Contributing
 
