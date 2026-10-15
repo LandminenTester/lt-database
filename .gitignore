@@ -2,8 +2,10 @@ bin/
 obj/
 dist/
 node_modules/
-ui/dist/
-ui/build/
 .vs/
 *.user
 .env
+# Never commit the real connector settings or the key secret.
+vfs/database.json
+vfs/database.secret
+vfs/*.secret

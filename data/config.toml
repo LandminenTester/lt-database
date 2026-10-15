@@ -1,13 +1,15 @@
 [General]
-description = "A fully working database connector that connects to the seperate database api that is hosted external to save and read persitent data for servers."
+description = "Database connector for BlackICE servers: other server bundles call its exports to declare tables and to read, write, update and delete data in a PostgreSQL, MySQL or MongoDB database through the external lt-database-api."
 author = "LandminenTester | Landminen Tester"
 version = "0.1.0"
 
 [Scripting]
-client_blob = "cl.wasm"
 server_blob = "sv.wasm"
+enable_vfs = true
 
-[ReUi]
+# The connector may only talk to your lt-database-api. Replace the host name; the API must be reachable over https.
+[Networking]
+allowed = ["db.example.com"]
 
 [Meta]
 config_version = "alpha_playtest"

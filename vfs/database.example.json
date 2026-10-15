@@ -1,0 +1,8 @@
+{
+  "url": "https://db.example.com",
+  "keyId": "gameserver",
+  "secretFile": "database.secret",
+  "allowedNamespaces": ["mygame"],
+  "timeoutMs": 15000,
+  "maxConcurrent": 8
+}

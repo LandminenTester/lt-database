@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Example server bundle that uses lt_database. It is not part of the connector's own build. -->
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
@@ -14,10 +15,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="replay.blackice.client" Version="1.1.0" />
+    <PackageReference Include="replay.blackice.server" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../sh/sh.csproj" />
+    <ProjectReference Include="../../sh/sh.csproj" />
+    <Compile Include="../../import/LtDatabase.Server.cs" Link="LtDatabase.Server.cs" />
   </ItemGroup>
 </Project>
