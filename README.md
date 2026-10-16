@@ -87,3 +87,5 @@ Examples that compile: [`examples/consumer`](examples/consumer) (a small consume
 ## License
 
 MIT, see [LICENSE](LICENSE). Built from the BlackICE Server Panel template, see [NOTICE.md](NOTICE.md).
+
+For a beginner-friendly introduction, read [C# usage](docs/USAGE.md) and the [complete preferences walkthrough](docs/EXAMPLES.md). Public English/German guides: [BlackICE documentation](https://blackice.landminentester.de/).

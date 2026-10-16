@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Replace ambiguous recipes with a compiled, sequential preferences walkthrough and explicit error handling.
+- Explain builder aliases, filters, callbacks, increment semantics and queued results.
+- Include the shared consumer contracts/builders and runnable example manifest in release archives.
+
 ## 0.2.0
 
 The bundle identity is `lt_database`, with `LtDatabase` contracts, `LtDatabaseClient` consumer helpers and `lt-db-*`

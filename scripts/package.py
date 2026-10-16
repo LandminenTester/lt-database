@@ -23,6 +23,14 @@ with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
         for file in sorted((root / folder).rglob("*")):
             if file.is_file():
                 z.write(file, file.relative_to(root).as_posix())
+    # Consumers need shared contracts/builders, not only the helper.
+    for file in sorted((root / "sh").rglob("*")):
+        if file.is_file() and not {"bin", "obj"}.intersection(file.relative_to(root).parts) and file.suffix in {".cs", ".csproj"}:
+            z.write(file, file.relative_to(root).as_posix())
+    z.write(root / "nuget.config", "nuget.config")
+    for file in sorted((root / "examples/consumer").iterdir()):
+        if file.is_file() and file.suffix in {".cs", ".csproj", ".toml"}:
+            z.write(file, file.relative_to(root).as_posix())
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 (out / "SHA256SUMS.txt").write_text(f"{digest}  {archive.name}\n", encoding="utf-8")
 print(f"Packaged {archive.name} ({archive.stat().st_size} bytes), SHA256 {digest}")

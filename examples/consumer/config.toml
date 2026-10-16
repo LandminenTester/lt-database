@@ -1,0 +1,10 @@
+[General]
+description = "Disposable lt_database preferences walkthrough; development databases only."
+author = "LandminenTester"
+version = "0.2.1"
+
+[Scripting]
+server_blob = "consumer.wasm"
+
+[Meta]
+config_version = "alpha_playtest"

@@ -1,7 +1,7 @@
 [General]
 description = "Database connector for BlackICE servers: other server bundles call its exports to declare tables and to read, write, update and delete data in a PostgreSQL, MySQL or MongoDB database through the external lt-database-api."
 author = "LandminenTester"
-version = "0.2.0"
+version = "0.2.1"
 
 [Scripting]
 server_blob = "sv.wasm"

@@ -19,7 +19,19 @@ Run from the `lt-database` source checkout:
 dotnet build examples/consumer/consumer.csproj -c Release
 ```
 
-This validates the consumer's WASM build. To run it, package the generated server WASM using the same `config.toml`/`server_blob` procedure as your own bundle, install it under a separate demo bundle folder, then start that folder **after** `lt_database`. The consumer is not the connector: do not replace the connector's `sv.wasm` with it.
+The generated file is `examples/consumer/bin/Release/net10.0/wasi-wasm/native/consumer.wasm`. To run it:
+
+1. Create `<server>/data/ugc/preferences_demo/`.
+2. Copy that `consumer.wasm` into the new folder.
+3. Copy `examples/consumer/config.toml` into the same folder **last**. It names `consumer.wasm` as `server_blob`; do not reuse the connector manifest.
+4. In the BlackICE server console run:
+
+```text
+start lt_database
+start preferences_demo
+```
+
+The consumer is separate from the connector: never replace the connector's `sv.wasm` with it. To run the demo again use `restart preferences_demo`.
 
 ## Data model
 
