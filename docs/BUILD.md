@@ -69,7 +69,7 @@ and .NET 10. It uploads the package as a CI artifact on ordinary builds. A CI bu
 * Keep `sh/Pure` free of SDK dependencies and add a test for every change in it.
 * Anything that touches signing, parsing of answers or the configuration needs a test that fails without the change.
 * Never log payloads, row values or the secret.
-* Keep the documentation in `docs/` and the recipes in `examples/consumer/Recipes.cs` in step with the code; the recipes are
+* Keep the documentation in `docs/` and the examples in `examples/consumer/PlayerPreferences.cs` in step with the code; the examples are
   compiled so they cannot drift silently.
 * Open pull requests with a short description of the problem and how you tested it (desktop tests, and a runtime test if the change
   touches `sv/` or the helper).

@@ -10,7 +10,7 @@ to `config.toml` needs the bundle to be restarted (`restart lt_database`).
 [General]
 description = "…"
 author = "…"
-version = "0.1.0"
+version = "0.2.0"
 
 [Scripting]
 server_blob = "sv.wasm"
