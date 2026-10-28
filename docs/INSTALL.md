@@ -6,6 +6,8 @@
 * A running [lt-database-api](https://github.com/LandminenTester/lt-database-api) in front of your database, reachable over
   HTTPS from the game server (plain HTTP only for loopback and local tests). Its documentation covers installation with Docker,
   Windows or Linux, the database accounts and TLS.
+* For the optional [SQL backend](SQL-BACKEND.md) instead of the API: a host with replay.blackice SDK **1.3.0** or newer and a database alias
+  (PostgreSQL or SQLite) declared in the bundle's `config.toml`.
 * On the API side an **API key** for this game server: a key id and a secret of at least 32 random characters, allowed for the
   namespaces your bundles use (and ideally restricted to the game server's address).
 

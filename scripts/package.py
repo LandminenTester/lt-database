@@ -15,7 +15,7 @@ archive = out / f"lt_database-{version}.zip"
 with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
     for src, dest in [
         ("data/config.toml", "config.toml"), ("dist/sv.wasm", "sv.wasm"),
-        ("vfs/database.example.json", "vfs/database.example.json"),
+        ("vfs/database.example.json", "vfs/database.example.json"), ("vfs/database.sql.example.json", "vfs/database.sql.example.json"),
         ("README.md", "README.md"), ("LICENSE", "LICENSE"), ("NOTICE.md", "NOTICE.md"),
     ]:
         z.write(root / src, dest)

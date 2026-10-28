@@ -10,7 +10,7 @@ to `config.toml` needs the bundle to be restarted (`restart lt_database`).
 [General]
 description = "…"
 author = "…"
-version = "0.2.1"
+version = "0.3.0"
 
 [Scripting]
 server_blob = "sv.wasm"
@@ -30,6 +30,10 @@ config_version = "alpha_playtest"
 | `Networking.allowed` | The only hosts the connector may contact. Entries: `host`, `host:port`, `scheme://host`, `scheme://host:port`; exact match, no wildcards; redirects are checked too. A request to an unlisted host fails and is logged. |
 
 ## `vfs/database.json`
+
+The connector has two backends, chosen by `"backend"`: `"http"` (default; this section) talks to lt-database-api, `"sql"` uses the host's
+`re.sql` provider with PostgreSQL or SQLite and needs no API ([SQL backend](SQL-BACKEND.md), which also lists the additional fields
+`sqlAlias`, `sqlDialect` and `destructiveMode`).
 
 ```json
 {
@@ -52,6 +56,13 @@ config_version = "alpha_playtest"
 | `timeoutMs` | `15000` | Time one request may take (1000 to 120000). |
 | `maxConcurrent` | `8` | Requests in flight at once (1 to 64); more calls wait in a queue. |
 | `allowInsecureHttp` | `false` | Allows plain `http://` to a remote host. Only for a network you fully trust. |
+| `backend` | `"http"` | `"http"` or `"sql"`. With `"sql"`, `url`, `keyId`, `secretFile` and `allowInsecureHttp` are ignored. |
+
+SQL variant (see [SQL backend](SQL-BACKEND.md)):
+
+```json
+{ "backend": "sql", "sqlAlias": "players", "sqlDialect": "auto", "destructiveMode": "deny", "allowedNamespaces": ["mygame"] }
+```
 
 If the file is missing or invalid, the bundle stays loaded but answers every call with `not_configured` and logs why
 (`lt-db-status` shows the reason).
@@ -86,5 +97,5 @@ their schema keep their state, so re-declare schemas by restarting them, or crea
 | Which hosts the sandbox may contact | `config.toml` → `Networking.allowed` |
 | Where the API is, which key, which namespaces | `vfs/database.json` |
 | The secret | `vfs/database.secret` |
-| Database credentials | Never here. Only the API knows them. |
+| Database credentials | Never here. With `http` only the API knows them; with `sql` they live in the `[Database.<alias>]` entry of `config.toml`. |
 | Which namespaces the key may use, rate limits, source address, destructive schema changes, write-behind | The API's configuration ([lt-database-api docs](https://github.com/LandminenTester/lt-database-api/blob/main/docs/DEPLOYMENT.md)) |

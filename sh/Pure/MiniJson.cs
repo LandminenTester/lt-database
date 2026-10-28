@@ -11,9 +11,10 @@ public static class MiniJson
 {
     const int MaxDepth = 32;
 
-    public static object? Parse(string text)
+    /// <summary>With strict set, a repeated property name in one object is an error instead of "last one wins".</summary>
+    public static object? Parse(string text, bool strict = false)
     {
-        var p = new Parser(text);
+        var p = new Parser(text, strict);
         var value = p.Value(0);
         p.SkipSpace();
         if (!p.End) throw new FormatException("Unexpected data after the JSON value.");
@@ -33,7 +34,7 @@ public static class MiniJson
         o is not null && o.TryGetValue(key, out var v) ? v switch { long l => l, double d when d == Math.Floor(d) => (long)d, _ => null } : null;
     public static bool? GetBool(Dictionary<string, object?>? o, string key) => o is not null && o.TryGetValue(key, out var v) ? v as bool? : null;
 
-    sealed class Parser(string s)
+    sealed class Parser(string s, bool strict)
     {
         int i;
         public bool End => i >= s.Length;
@@ -76,6 +77,7 @@ public static class MiniJson
                 SkipSpace();
                 if (End || s[i] != ':') throw new FormatException("Expected ':'.");
                 i++;
+                if (strict && result.ContainsKey(key)) throw new FormatException("Duplicate property name.");
                 result[key] = Value(depth + 1);
                 SkipSpace();
                 if (End) throw new FormatException("Unterminated object.");

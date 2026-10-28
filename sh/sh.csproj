@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="replay.blackice.shared" Version="1.1.0" />
+    <PackageReference Include="replay.blackice.shared" Version="1.3.0" />
     <PackageReference Include="Serde" Version="0.10.2" />
   </ItemGroup>
 </Project>

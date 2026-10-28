@@ -9,6 +9,9 @@ every request and verifying every answer.
 your server bundle ──re.Exports──▶ lt_database (this bundle) ──HTTPS, HMAC-signed──▶ lt-database-api ──▶ PostgreSQL | MySQL | MongoDB
 ```
 
+Since 0.3.0 the connector can alternatively use the host's own `re.sql` provider (PostgreSQL or SQLite, SDK 1.3.0 or newer) without
+the API, selected with `"backend": "sql"` in `vfs/database.json`. Consumers see no difference; see [SQL backend](docs/SQL-BACKEND.md).
+
 The BlackICE sandbox can only open HTTP connections to hosts listed in a bundle's manifest and has no database driver or
 writable database file. This bundle plus the API is the bridge.
 

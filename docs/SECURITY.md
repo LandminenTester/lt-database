@@ -29,6 +29,14 @@ protocol.
 | Leaking the secret to players | The secret lives only in the private `vfs/` folder, which is not streamed to clients; nothing sensitive is compiled into the WASM |
 | Information in logs | Calls are logged with id and error type only. Payloads, values and the secret are never logged |
 
+## The SQL backend
+
+With `"backend": "sql"` there is no network hop and therefore no signing: the connector uses the host's `re.sql` provider directly.
+The remaining defences are `allowedNamespaces`, the identifier rules, parameter binding for every value (a null becomes a literal, a
+name never comes from the request), per-operation limits and the privileges of the **database account behind the alias**: give it only
+what the game needs. Anyone who can call the connector can use the allowed namespaces, as with the API. Error answers contain stable
+codes only, never driver messages. Details and differences: [SQL backend](SQL-BACKEND.md).
+
 ## What it does not protect against
 
 * **A malicious bundle on the same game server.** It can call the connector for any allowed namespace. Install only bundles you

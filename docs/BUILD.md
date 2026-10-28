@@ -5,7 +5,7 @@
 * .NET 10 SDK. The projects target `net10.0` with the `wasi-wasm` runtime identifier and compile ahead of time with
   NativeAOT-LLVM, which comes from NuGet (`nuget.config` adds the `dotnet-experimental` feed for the two ILCompiler packages).
 * Internet access on the first build to restore packages. Package versions are pinned: `replay.blackice.server` / `replay.blackice.shared`
-  1.1.0 and `Serde` 0.10.2.
+  1.3.0 and `Serde` 0.10.2. (1.3.0 provides `re.sql`, which the SQL backend needs.)
 * Optional: Docker, to run the API and databases for a runtime test.
 
 Windows and Linux both work. Building the WASM takes a few minutes the first time.
@@ -25,7 +25,7 @@ Project layout:
 ```
 config.toml is data/config.toml        the manifest (copied to dist/)
 sh/            shared project           Contracts.cs (MessagePack records)  +  Pure/ (crypto, JSON, signing, builders)
-sv/            server component         App.cs, DbClient.cs, DatabaseConfig.cs
+sv/            server component         App.cs, DbClient.cs, DatabaseConfig.cs, HttpBackend.cs, SqlBackend*.cs
 import/        helper for consumers     LtDatabase.Server.cs
 examples/      consumer, smoke          compilable examples
 tests/         Bundle.Tests             protocol tests on a normal .NET runtime
@@ -41,7 +41,8 @@ cd tests/Bundle.Tests
 dotnet test
 ```
 
-39 tests: SHA-256 and HMAC against `System.Security.Cryptography` (every length around the block size) and RFC 4231; the API's published
+100+ tests: the SQL generation, schema hash, diff and receipt logic (compared with vectors produced by the real lt-database-api code,
+and executed on an in-memory SQLite engine through `Microsoft.Data.Sqlite`); SHA-256 and HMAC against `System.Security.Cryptography` (every length around the block size) and RFC 4231; the API's published
 signing vectors; response verification (forged, replayed, inconsistent, unsigned); the JSON reader and writer (hostile text, malformed
 input, nesting); filter, schema, row and `immediate` builders.
 

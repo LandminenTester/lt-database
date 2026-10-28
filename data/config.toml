@@ -1,11 +1,14 @@
 [General]
-description = "Database connector for BlackICE servers: other server bundles call its exports to declare tables and to read, write, update and delete data in a PostgreSQL, MySQL or MongoDB database through the external lt-database-api."
+description = "Database connector for BlackICE servers: other server bundles call its exports to declare tables and to read, write, update and delete data in a PostgreSQL, MySQL or MongoDB database through the external lt-database-api, or (SDK 1.3.0 or newer) in PostgreSQL or SQLite through the host's re.sql provider."
 author = "LandminenTester"
-version = "0.2.1"
+version = "0.3.0"
 
 [Scripting]
 server_blob = "sv.wasm"
 enable_vfs = true
+
+# SQL backend (vfs/database.json: "backend": "sql"): declare the database alias named by "sqlAlias" in a [Database.<alias>] section
+# as described in the Replay.RE re.sql documentation. See docs/SQL-BACKEND.md. [Networking] is not needed in that mode.
 
 # The connector may only talk to your lt-database-api. Replace the host name; the API must be reachable over https.
 [Networking]

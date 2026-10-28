@@ -39,11 +39,16 @@ The first argument is the folder name of the connector bundle.
 | `schema.describe` | `POST /v1/schema/describe` | yes |
 | `find` | `POST /v1/data/find` | yes |
 | `count` | `POST /v1/data/count` | yes |
-| `delete` | `POST /v1/data/delete` | yes |
+| `delete` | `POST /v1/data/delete` | no (a repeated filter can match new rows) |
 | `flush` | `POST /v1/data/flush` | yes |
+| `mutation.execute` | `POST /v1/data/mutation/execute` | no; recover with `mutation.receipt` |
+| `mutation.receipt` | `POST /v1/data/mutation/receipt` | yes |
 | `insert`, `upsert`, `update` | `POST /v1/data/…` | only if the payload carries an `idempotencyKey` (the helper adds one for insert and upsert) |
 
-Retries (up to three attempts, 300 ms and 600 ms apart) happen for network errors and for unsigned `502/503/504` answers. A `401`
+With the `sql` backend the same operations run through `re.sql` and nothing is retried by the connector; see
+[SQL backend](SQL-BACKEND.md) for the few differences (no write-behind, no signing, destructive mode, engines).
+
+Retries (http backend only; up to three attempts, 300 ms and 600 ms apart) happen for network errors and for unsigned `502/503/504` answers. A `401`
 triggers one clock re-sync and one more attempt. Authentic error answers from the API are never retried.
 
 Limits: a payload may have at most 1,000,000 characters; at most 512 calls may be waiting at once (`busy` beyond that);
@@ -130,7 +135,7 @@ From the API (signed, trustworthy): `invalid_request`, `invalid_identifier`, `in
 
 | Command | Does |
 |---|---|
-| `lt-db-status` | Target, key id, allowed namespaces, queue and in-flight counts, circuit state, clock offset (never the secret) |
+| `lt-db-status` | Backend (`http` or `sql`), target (URL and key id, or alias, dialect and destructive mode), allowed namespaces, queue and in-flight counts, circuit state, clock offset (never the secret) |
 | `lt-db-health` | Sends an authenticated health check and prints the outcome |
 | `lt-db-reload` | Re-reads `vfs/database.json` and the secret, resets the circuit breaker and re-syncs the clock |
 

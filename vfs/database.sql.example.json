@@ -1,0 +1,9 @@
+{
+  "backend": "sql",
+  "sqlAlias": "players",
+  "sqlDialect": "auto",
+  "destructiveMode": "deny",
+  "allowedNamespaces": ["mygame"],
+  "timeoutMs": 10000,
+  "maxConcurrent": 8
+}

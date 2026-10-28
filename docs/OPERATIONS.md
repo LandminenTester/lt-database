@@ -8,6 +8,7 @@
 | Check the whole chain | `lt-db-health` |
 | Apply a changed `database.json` or secret | `lt-db-reload` |
 | Apply a changed `config.toml` or a new `sv.wasm` | Replace the files, write `config.toml` last, then `restart lt_database` |
+| Switch between the `http` and `sql` backend | Change `backend` (and the matching fields) in `database.json`, `lt-db-reload`, check `lt-db-status`, restart the bundles that declared schemas ([SQL backend](SQL-BACKEND.md)) |
 | Switch to another database or API | Change `url` (and `keyId` / secret if needed), `lt-db-reload`, restart the bundles that declared schemas |
 | Find log lines | Server log, tag `script:lt_database` (and your own bundle's tag) |
 
@@ -77,6 +78,8 @@ Alert on: repeated `circuit=open`, `bad_signature` (somebody answers in the API'
 | `namespace_unknown` / `unknown_table` | The schema was not synced yet (or was removed): run `Db.Sync` first, and wait for its callback |
 | `constraint_violation` | A unique value already exists or a required reference is missing |
 | `missing_value` | A required column has no value and no default |
+| `database_error` / `database_timeout` (sql backend) | The alias is missing or wrong in `config.toml`, the database is down, or the account lacks privileges (it needs `CREATE` once and DDL rights for schema sync). Check `lt-db-health`, the server log (operation, exception type, mapped code) and [SQL backend](SQL-BACKEND.md) |
+| `conflict_retry` (sql backend, SQLite) | Another writer holds SQLite's single write lock; retry the call |
 | `unavailable` | Five failures in a row; the circuit breaker pauses calls for 15 seconds. Fix the cause (see `network`) |
 | `bundle_unavailable` | The connector is not running (`bundles`, `start lt_database`) or has another folder name than `Db.Bundle` |
 | `start lt_database` says "Failed to find bundle" | The server has not discovered the folder: rewrite `config.toml` after `sv.wasm`, or restart the server |
