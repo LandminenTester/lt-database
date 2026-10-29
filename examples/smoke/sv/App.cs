@@ -14,11 +14,17 @@ public static class App
     static int index, passed;
     static string label = "";
     static bool running;
+    // With the sql backend there are no key permissions, so the label decides which refusal step 28 expects (label contains "sql").
+    static bool Sql => label.Contains("sql", StringComparison.OrdinalIgnoreCase);
 
     public static void Start()
     {
-        re.Con.RegisterCommand("db-smoke", a => Begin(a.FirstOrDefault() ?? "unnamed"));
-        Console.WriteLine("[db-smoke] ready. Run: db-smoke <label>");
+        re.Con.RegisterCommand("db-smoke", a =>
+        {
+            if (a.Count() > 1) Db.Bundle = a.ElementAt(1);
+            Begin(a.FirstOrDefault() ?? "unnamed");
+        });
+        Console.WriteLine("[db-smoke] ready. Run: db-smoke <label> [connector-bundle]");
     }
 
     static void Begin(string name)
@@ -120,7 +126,9 @@ public static class App
         new("unknown column is a clean 400", d => Db.Insert(Ns, Players, Q.Row(("name", "q"), ("nope", 1)), d), r => Error(r, "unknown_column")),
         new("too long value is refused", d => Db.Insert(Ns, Players, Q.Row(("name", new string('z', 40))), d), r => Error(r, "value_too_long")),
         new("update without filter is refused", d => Db.Call("update", "{\"namespace\":\"smoke_test\",\"table\":\"players\",\"set\":{\"score\":0}}", d), r => Error(r, "filter_required")),
-        new("unfiltered delete needs the key permission", d => Db.Call("delete", "{\"namespace\":\"smoke_test\",\"table\":\"players\",\"all\":true}", d), r => Error(r, "forbidden")),
+        new("unfiltered delete is refused (api: key permission, sql: filter required)",
+            d => Db.Call("delete", Sql ? "{\"namespace\":\"smoke_test\",\"table\":\"players\"}" : "{\"namespace\":\"smoke_test\",\"table\":\"players\",\"all\":true}", d),
+            r => Error(r, Sql ? "filter_required" : "forbidden")),
         new("namespace outside the allow-list is refused", d => Db.Count("smoke_denied", Players, d), r => Error(r, "namespace_not_allowed")),
         new("dangerous filter is rejected", d => Db.Call("find", "{\"namespace\":\"smoke_test\",\"table\":\"players\",\"filter\":{\"field\":\"name\",\"op\":\"$where\",\"value\":1}}", d), r => Error(r, "invalid_filter")),
         new("delete one row", d => Db.Delete(Ns, Players, F.Eq("name", "bob"), d), r => Both(Ok(r), () => Db.Number(r) == 1 ? null : "expected 1 affected")),

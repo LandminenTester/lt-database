@@ -94,6 +94,20 @@ internal sealed partial class SqlBackend
     async Future<HashSet<string>> NameSet(DatabaseConfig cfg, re.sql.SqlConnection db, re.sql.SqlTransaction? tx, string sql, string physical) =>
         [.. (await Query(cfg, db, tx, sql, [physical])).Select(r => r[0]!.ToString()!)];
 
+    /// <summary>
+    /// Column names of a table. SQLite's host sandbox does not authorize pragma_table_info, so the names come from the
+    /// header of an empty SELECT instead; PostgreSQL uses information_schema.
+    /// </summary>
+    async Future<HashSet<string>> ColumnSet(DatabaseConfig cfg, re.sql.SqlConnection db, re.sql.SqlTransaction? tx, string physical)
+    {
+        if (dialect!.Name != "sqlite") return await NameSet(cfg, db, tx, dialect.ColumnNamesSql, physical);
+        var names = new HashSet<string>();
+        await using var cmd = Command(cfg, db, tx, $"SELECT * FROM {dialect.Quote(physical)} LIMIT 0", []);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        for (var i = 0; i < reader.FieldCount; i++) names.Add(reader.GetName(i));
+        return names;
+    }
+
     /// <summary>Compares the stored plan with reality: objects that should exist but were removed or never created are added to the plan.</summary>
     async Future AddRepairOps(DatabaseConfig cfg, re.sql.SqlConnection db, re.sql.SqlTransaction? tx, string ns, SchemaDefinition desired, List<SchemaOp> ops)
     {
@@ -107,7 +121,7 @@ internal sealed partial class SqlBackend
                 foreach (var ix in t.Indexes) ops.Add(new SchemaOp { Kind = SchemaOpKind.CreateIndex, Table = t.Name, Index = ix.Name, IndexDef = ix, Note = "repair" });
                 continue;
             }
-            var columns = await NameSet(cfg, db, tx, dialect!.ColumnNamesSql, phys);
+            var columns = await ColumnSet(cfg, db, tx, phys);
             foreach (var col in t.Columns.Where(x => !columns.Contains(x.Name)))
             {
                 if (ops.Any(o => (o.Kind == SchemaOpKind.AddColumn && o.Column == col.Name && o.Table == t.Name) || (o.Kind == SchemaOpKind.RenameColumn && o.NewName == col.Name && o.Table == t.Name))) continue;
@@ -138,7 +152,7 @@ internal sealed partial class SqlBackend
                 await Run(cfg, db, tx, d.RenameTableSql(phys, to), []);
                 break;
             case SchemaOpKind.RenameColumn:
-                var cols = await NameSet(cfg, db, tx, d.ColumnNamesSql, phys);
+                var cols = await ColumnSet(cfg, db, tx, phys);
                 if (!cols.Contains(op.Column!) && cols.Contains(op.NewName!)) break;
                 await Run(cfg, db, tx, d.RenameColumnSql(phys, op.Column!, op.NewName!), []);
                 break;
@@ -147,7 +161,7 @@ internal sealed partial class SqlBackend
                 if ((await NameSet(cfg, db, tx, d.IndexNamesSql, phys)).Contains(ixName)) await Run(cfg, db, tx, d.DropIndexSql(phys, ixName), []);
                 break;
             case SchemaOpKind.AddColumn:
-                if ((await NameSet(cfg, db, tx, d.ColumnNamesSql, phys)).Contains(op.Column!)) break;
+                if ((await ColumnSet(cfg, db, tx, phys)).Contains(op.Column!)) break;
                 foreach (var sql in d.AddColumnSql(phys, op.ColumnDef!)) await Run(cfg, db, tx, sql, []);
                 break;
             case SchemaOpKind.AlterColumn:
@@ -163,7 +177,7 @@ internal sealed partial class SqlBackend
                 await Run(cfg, db, tx, d.CreateIndexSql(phys, newIx, op.IndexDef!), []);
                 break;
             case SchemaOpKind.DropColumn:
-                if (!(await NameSet(cfg, db, tx, d.ColumnNamesSql, phys)).Contains(op.Column!)) break;
+                if (!(await ColumnSet(cfg, db, tx, phys)).Contains(op.Column!)) break;
                 if (mode == "quarantine")
                 {
                     var parked = Park(op.Column!, 63);
@@ -223,7 +237,7 @@ internal sealed partial class SqlBackend
     async Future Rebuild(DatabaseConfig cfg, re.sql.SqlConnection db, re.sql.SqlTransaction tx, string ns, SchemaTable desired, IEnumerable<SchemaColumn> carry, ApplyState state)
     {
         var phys = SqlSchema.Physical(ns, desired.Name);
-        var existing = await NameSet(cfg, db, tx, dialect!.ColumnNamesSql, phys);
+        var existing = await ColumnSet(cfg, db, tx, phys);
         foreach (var sql in SqlSchema.RebuildStatements(dialect, phys, desired, existing, carry)) await Run(cfg, db, tx, sql, []);
         state.Rebuilt.Add(desired.Name);
     }

@@ -184,8 +184,10 @@ What has been verified automatically (`tests/Bundle.Tests`, 100+ tests):
 * the generated SQL executed against a **real SQLite engine** (types, filters, paging, upsert, constraint failures, rebuild with data and
   index restoration, savepoint semantics).
 
-What has **not** been run yet and must be checked once on a real host before relying on it: the BlackICE host's `re.sql` behavior
-(parameter binding, transactions across awaited commands, `CommandTimeout`, how it maps column types back) and the PostgreSQL statements
-against a real PostgreSQL server. Run `lt-db-health`, then the smoke bundle in `examples/smoke` with `"backend": "sql"` (first with a
-SQLite alias, then with PostgreSQL), and add scenarios for `mutation.execute` / `mutation.receipt` (they are not part of the 38 smoke steps yet). Until that passes, treat the SQL backend as implemented
-but not accepted, and keep `mutation.*` consumers on the `http` backend.
+Verified on a real BlackICE server (Docker, `re.sql` host): the 38-step smoke bundle in `examples/smoke` passes 38/38 with `"backend": "sql"` on a
+SQLite alias and 38/38 on PostgreSQL 17 (parameter binding, transactions across awaited commands, schema sync and rebuilds, type mapping).
+SQLite note: the host's sandbox refuses `pragma_table_info`, so the connector reads column names from `SELECT * … LIMIT 0`.
+
+**Not yet covered by the smoke bundle:** `mutation.execute` / `mutation.receipt` (unit-tested and run on a real SQLite engine, but no
+runtime scenario in a BlackICE host yet), `CommandTimeout` behavior and concurrent writers. Keep `mutation.*` consumers on the `http`
+backend until a runtime scenario exists.
