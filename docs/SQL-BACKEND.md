@@ -43,9 +43,22 @@ With `"backend": "sql"` the fields `url`, `keyId`, `secretFile` and `allowInsecu
 needed. Any invalid combination keeps the bundle loaded but answers every call with `not_configured` (see `lt-db-status`), so a wrong
 file can never fall back to another backend or to a half-working one.
 
-The connection itself belongs into `config.toml`. Its exact keys are defined by the Replay.RE documentation for `re.sql` (SDK 1.3.0);
-this bundle only needs the alias name and does not read the entry. A connection test: `lt-db-health` (the answer carries
-`"database": true` when `SELECT 1` worked).
+The connection itself belongs into `config.toml`:
+
+```toml
+[Database.players]
+type = "postgres"
+conninfo = "host=${DB_HOST} port=5432 dbname=players user=ugc password=${DB_PASSWORD}"
+
+[Database.stats]
+type = "sqlite"
+name = "stats.db"
+```
+
+`type` is `"postgres"` or `"sqlite"`. `conninfo` (PostgreSQL only) is a libpq connection string in which `${VAR}` is replaced by environment
+variables; it must name exactly one host. `name` (SQLite only) creates the file under `data/persistent/<bundle>/`; every bundle gets its own
+file. The exact keys are defined by the Replay.RE documentation for `re.sql` (SDK 1.3.0); the connector only needs the alias name and does not
+read the entry. A connection test: `lt-db-health` (the answer carries `"database": true` when `SELECT 1` worked).
 
 `lt-db-reload` re-reads `vfs/database.json`, drops all caches and re-detects the dialect. A changed `[Database.<alias>]` entry needs the
 bundle to be restarted like any other `config.toml` change.
