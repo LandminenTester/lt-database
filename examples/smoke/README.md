@@ -1,7 +1,15 @@
 # Runtime smoke test
 
-This server-only bundle registers `db-smoke <label>`. It exercises 38 steps: signed health, schema creation and migration,
-all CRUD operations, filters, sorting, paging, constraints, namespace isolation and final cleanup.
+This server-only bundle registers two commands:
+
+* `db-smoke <label> [connector-bundle]` runs 38 steps: health, schema creation and migration, all CRUD operations, filters, sorting,
+  paging, constraints, namespace isolation and final cleanup.
+* `db-smoke-mutation <label> [connector-bundle]` runs 29 steps for atomic mutation receipts (`mutation.execute`, `mutation.receipt`):
+  replay, receipt conflicts, lookups, `no_match`, `multiple_rows`, durable failed receipts, rejected envelopes and two parallel executions.
+
+The optional second argument names the connector bundle to test (default `lt_database`), so a `sql` and an `http` installation can sit
+side by side. A label that contains `sql` makes the test expect the `sql` behavior where it differs from the API (an unfiltered delete is
+refused with `filter_required`; the API refuses it with `forbidden` when the key has no permission).
 
 Use a disposable database. The test **drops and recreates tables in `smoke_test`**. Do not store real data in that namespace.
 
@@ -31,7 +39,11 @@ start db_smoke
 db-smoke postgres
 ```
 
-Expected final line: `[db-smoke] RESULT postgres: 38/38 passed`.
+Expected final line: `[db-smoke] RESULT postgres: 38/38 passed`. For receipts run `db-smoke-mutation postgres` and expect
+`29/29 passed`. Mutation effect IDs carry a per-run prefix because receipts are permanent.
+
+With the `sql` backend (`"backend": "sql"` and a `[Database.<alias>]` entry in the connector's `config.toml`) use a label with `sql`,
+for example `db-smoke sql-sqlite lt_database_sqltest`. Both scenarios were run this way on a SQLite alias and on PostgreSQL 17.
 Run separately against PostgreSQL, MySQL and MongoDB by changing the connector's API URL and running `lt-db-reload`.
 The label is only a log label; it does not select a database. See [local Docker setup](../../docs/INSTALL.md#local-test-with-docker).
 

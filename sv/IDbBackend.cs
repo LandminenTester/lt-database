@@ -31,5 +31,8 @@ internal interface IDbBackend
     /// <summary>One-line state for lt-db-status.</summary>
     string Describe(DatabaseConfig config);
 
+    /// <summary>Calls this backend can run at the same time, at most the configured maxConcurrent.</summary>
+    int MaxParallel(DatabaseConfig config);
+
     Future<BackendResult> Execute(DatabaseConfig config, BackendCall call);
 }

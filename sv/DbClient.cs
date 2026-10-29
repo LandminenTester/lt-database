@@ -103,7 +103,8 @@ internal static class DbClient
     static void Pump()
     {
         if (config is null) return;
-        while (inFlight < config.MaxConcurrent && Waiting.TryDequeue(out var job))
+        var limit = Math.Min(config.MaxConcurrent, backend?.MaxParallel(config) ?? config.MaxConcurrent);
+        while (inFlight < limit && Waiting.TryDequeue(out var job))
         {
             inFlight++;
             var current = job;

@@ -52,7 +52,7 @@ Retries (http backend only; up to three attempts, 300 ms and 600 ms apart) happe
 triggers one clock re-sync and one more attempt. Authentic error answers from the API are never retried.
 
 Limits: a payload may have at most 1,000,000 characters; at most 512 calls may be waiting at once (`busy` beyond that);
-`maxConcurrent` requests run in parallel.
+with the `http` backend `maxConcurrent` requests run in parallel; the `sql` backend runs one call at a time (see [Concurrency](SQL-BACKEND.md#concurrency)).
 
 ## `LtDatabaseClient.Db` (helper)
 

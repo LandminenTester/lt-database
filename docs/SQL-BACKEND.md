@@ -14,6 +14,7 @@ which one is active.
 | Typical use | shared database, several game servers, MySQL or MongoDB | one game server, no extra service to run, local development, tests |
 
 Pick **one** backend per bundle installation. Mixed operation per namespace is not supported.
+Not sure which one fits? [Choosing a backend and settings](USE-CASES.md) lists typical situations, the settings to use and the trade-offs.
 
 ## Selecting the backend
 
@@ -37,7 +38,8 @@ Pick **one** backend per bundle installation. Mixed operation per namespace is n
 | `sqlAlias` | required for `sql` | Name of a `[Database.<alias>]` entry of the bundle's `config.toml` (letters, digits, `_`, `-`, at most 64 characters). Host, user, password or file path are declared there and are never visible to the bundle code. |
 | `sqlDialect` | `"auto"` | `"auto"` (asks the engine: `sqlite_version()` answers on SQLite, anything else is treated as PostgreSQL), `"postgres"` or `"sqlite"`. Set it explicitly if detection is not wanted. |
 | `destructiveMode` | `"deny"` | What `schema.sync` may do with tables and columns that disappeared from the declaration: `"deny"`, `"quarantine"` or `"apply"`, see [Schema sync](#schema-sync). |
-| `allowedNamespaces`, `timeoutMs`, `maxConcurrent` | as for `http` | Same meaning. `timeoutMs` becomes the SQL command timeout, rounded up to whole seconds and capped at 30 (the limit of `re.sql`). |
+| `allowedNamespaces`, `timeoutMs` | as for `http` | Same meaning. `timeoutMs` becomes the SQL command timeout, rounded up to whole seconds and capped at 30 (the limit of `re.sql`). |
+| `maxConcurrent` | `8` | Accepted, but with `sql` it has no effect above 1: calls run one at a time, see [Concurrency](#concurrency). |
 
 With `"backend": "sql"` the fields `url`, `keyId`, `secretFile` and `allowInsecureHttp` are ignored, and `[Networking] allowed` is not
 needed. Any invalid combination keeps the bundle loaded but answers every call with `not_configured` (see `lt-db-status`), so a wrong
@@ -96,6 +98,7 @@ Everything a consumer can observe:
 | `health` | `{"status":"ok","provider":"postgres"|"sqlite","database":true|false,"writeBuffer":{…disabled…}}`; `provider` is `unknown` before the first connection when the dialect is `auto`. |
 | Engines | PostgreSQL and SQLite only. MySQL, MariaDB and MongoDB stay with the `http` backend. `mutation.*` is available on both engines. |
 | Time and number formats | Same JSON. SQLite stores `decimal` as `NUMERIC` and returns it as a number without trailing zeros (`12.5` instead of `12.50`). |
+| Concurrency | Calls of one bundle run strictly one after another (the `http` backend runs up to `maxConcurrent` at once), see [Concurrency](#concurrency). |
 | Request size | Each operation runs on its own connection (opened and closed per call); a result set is read completely into memory, bounded by the 1000-row limit. |
 
 ### Types
@@ -151,7 +154,7 @@ reads it back later without executing anything. The contract is the one of lt-da
 1. The request is validated strictly: only the five expected text members, strict UTF-8 JSON without duplicate keys (the command root is
    also compared case-insensitively), at most 8192 bytes, depth 16, `all` absent or `false`, the namespace equal to the receipt's, and the
    fingerprint equal to the SHA-256 of the length-framed `effectId`, namespace, operation and JSON.
-2. A unique reservation `(namespace, effectId)` is inserted first. A concurrent request for the same effect waits until the first
+2. A unique reservation `(namespace, effectId)` is inserted first. A concurrent request for the same effect (from another game server on the same database) waits until the first
    transaction ends; the same effect with the same fingerprint then returns the stored receipt, with another operation or fingerprint
    `409 receipt_conflict`.
 3. A savepoint is set, the mutation runs, and it may affect **at most one row** (`409 multiple_rows` otherwise). A constraint or value
@@ -163,6 +166,23 @@ reads it back later without executing anything. The contract is the one of lt-da
 Engine notes: PostgreSQL uses `READ COMMITTED`, `SELECT … FOR UPDATE` on the target row and on the receipt. SQLite has a single writer; the
 reservation takes its write lock, and a second writer waits (or fails with `conflict_retry`, depending on the host's busy timeout).
 MySQL and MongoDB receipts are not available here (and MongoDB receipts are unsupported by the API as well).
+
+## Concurrency
+
+The host executes the SQL commands of one alias one after another. If two transactions were open at the same time and one of them
+waited for a row lock held by the other, the waiting command would block the other transaction's next command until the command
+timeout: a self-inflicted stall that ended in `database_timeout`. This was reproduced with two parallel `mutation.execute` calls for the
+same effect on PostgreSQL. The connector therefore runs **one call at a time per bundle**; further calls wait in the connector's queue
+(512 entries, `busy` beyond that) and are answered in order.
+
+What this means in practice:
+
+* A slow query (for example a `find` over a large table) delays the calls queued behind it. Keep `limit` small and index the filter columns.
+* `maxConcurrent` is accepted for compatibility and has no effect above 1 with `sql`.
+* Several **game servers** sharing one PostgreSQL database are still safe: the database itself arbitrates between them (advisory lock
+  for `schema.sync`, the unique receipt reservation for `mutation.execute`).
+* Throughput is the number of round trips per second of a single connection. For hundreds of writes per second use batched
+  `insert` calls (up to 1000 rows) or the `http` backend with write-behind.
 
 ## Operations and safety notes
 
@@ -197,10 +217,22 @@ What has been verified automatically (`tests/Bundle.Tests`, 100+ tests):
 * the generated SQL executed against a **real SQLite engine** (types, filters, paging, upsert, constraint failures, rebuild with data and
   index restoration, savepoint semantics).
 
-Verified on a real BlackICE server (Docker, `re.sql` host): the 38-step smoke bundle in `examples/smoke` passes 38/38 with `"backend": "sql"` on a
-SQLite alias and 38/38 on PostgreSQL 17 (parameter binding, transactions across awaited commands, schema sync and rebuilds, type mapping).
-SQLite note: the host's sandbox refuses `pragma_table_info`, so the connector reads column names from `SELECT * … LIMIT 0`.
+Verified on a real BlackICE server (Docker, `re.sql` host) with the bundles in `examples/smoke`, on a SQLite alias and on PostgreSQL 17:
 
-**Not yet covered by the smoke bundle:** `mutation.execute` / `mutation.receipt` (unit-tested and run on a real SQLite engine, but no
-runtime scenario in a BlackICE host yet), `CommandTimeout` behavior and concurrent writers. Keep `mutation.*` consumers on the `http`
-backend until a runtime scenario exists.
+| Scenario | Steps | SQLite | PostgreSQL 17 |
+|---|---|---|---|
+| `db-smoke`: CRUD, filters, paging, constraints, schema sync and rebuilds, type mapping, namespace isolation | 38 | 38/38 | 38/38 |
+| `db-smoke-mutation`: `mutation.execute` / `mutation.receipt`, see below | 29 | 29/29 | 29/29 |
+
+The mutation scenario covers: upsert, update and delete with receipts; replay of the same effect (applied once); receipt conflicts for
+another mutation, operation or fingerprint; receipt lookup (found, not found, conflict); `no_match`; an update that would touch several
+rows (`multiple_rows`, recorded as a failed receipt, nothing changed); a constraint violation as a durable `failed` receipt that is
+returned again on repetition; rejection of `all=true`, a foreign namespace, duplicate keys, a wrong fingerprint and extra envelope
+members; two parallel executions of one effect (applied exactly once; on SQLite the waiting call may answer `conflict_retry`).
+
+Findings of the runtime tests that shaped the code: SQLite's sandbox refuses `pragma_table_info`, so column names come from
+`SELECT * … LIMIT 0`; and the host runs commands of one alias sequentially, which is why calls are serialized
+([Concurrency](#concurrency)).
+
+Not covered: `CommandTimeout` expiry under load, several game servers against one database, and `lt-core`'s storage adapter in `sql`
+mode (it only uses the public exports, which are identical, but has not been run yet).

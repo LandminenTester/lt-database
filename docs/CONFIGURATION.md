@@ -54,7 +54,7 @@ The connector has two backends, chosen by `"backend"`: `"http"` (default; this s
 | `secretFile` | `database.secret` | File inside `vfs/` that holds the secret. Absolute paths and `..` are refused. |
 | `allowedNamespaces` | required | Namespaces the connector will send. At least one entry, or `"*"` for all. Each entry follows the identifier rule below. |
 | `timeoutMs` | `15000` | Time one request may take (1000 to 120000). |
-| `maxConcurrent` | `8` | Requests in flight at once (1 to 64); more calls wait in a queue. |
+| `maxConcurrent` | `8` | Requests in flight at once (1 to 64); more calls wait in a queue. Only the `http` backend uses it: the `sql` backend always runs one call at a time. |
 | `allowInsecureHttp` | `false` | Allows plain `http://` to a remote host. Only for a network you fully trust. |
 | `backend` | `"http"` | `"http"` or `"sql"`. With `"sql"`, `url`, `keyId`, `secretFile` and `allowInsecureHttp` are ignored. |
 

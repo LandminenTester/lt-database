@@ -59,7 +59,8 @@ Alert on: repeated `circuit=open`, `bad_signature` (somebody answers in the API'
 ## Performance
 
 * One call is one HTTPS round trip plus the database time, typically some tens of milliseconds. Do not call per tick.
-* `maxConcurrent` (default 8) limits parallel requests; raise it if you have many independent callers and a fast API.
+* `maxConcurrent` (default 8) limits parallel requests of the `http` backend; raise it if you have many independent callers and a fast API.
+  The `sql` backend runs one call at a time, so keep its queries short (small `limit`, indexed filters) and batch inserts.
 * Batch: insert many rows with one call, read with `limit`, and cache what you read.
 * For many small writes ask the API owner about [write-behind](https://github.com/LandminenTester/lt-database-api/blob/main/docs/WRITE-BEHIND.md).
 * Keep payloads small. The API's limit is 1 MiB per request; rows per insert are limited (default 1000).

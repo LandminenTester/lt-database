@@ -20,6 +20,8 @@ internal sealed class HttpBackend : IDbBackend
     public string Describe(DatabaseConfig config) =>
         $"backend=http url={config.Url} key={config.KeyId} circuit={(Unavailable ? "open" : "closed")} clockOffset={clockOffset}s";
 
+    public int MaxParallel(DatabaseConfig config) => config.MaxConcurrent;
+
     long LocalUnix() => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     long NowUnix() => LocalUnix() + clockOffset;
 

@@ -34,6 +34,10 @@ internal sealed partial class SqlBackend : IDbBackend
     public string Describe(DatabaseConfig config) =>
         $"backend=sql alias={config.SqlAlias} dialect={dialect?.Name ?? "unknown"} destructive={config.DestructiveMode}{(lastError.Length > 0 ? " lastError=" + lastError : "")}";
 
+    // The host runs the commands of one alias one after another. A transaction waiting for a row lock held by another
+    // transaction would block that transaction's next command until the command timeout, so calls run one at a time.
+    public int MaxParallel(DatabaseConfig config) => 1;
+
     static long NowMs() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     // re.sql caps CommandTimeout at 30 seconds and treats 0 as "default 5".

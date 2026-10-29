@@ -4,7 +4,7 @@ using LtDatabaseClient;
 // Runtime smoke test for the lt_database connector.
 //   db-smoke <label>    runs every connector function against the configured database and prints PASS/FAIL per step.
 // The namespace "smoke_test" must be in vfs/database.json (allowedNamespaces) and in the API key. "smoke_denied" must NOT be.
-public static class App
+public static partial class App
 {
     const string Ns = "smoke_test";
 
@@ -24,13 +24,18 @@ public static class App
             if (a.Count() > 1) Db.Bundle = a.ElementAt(1);
             Begin(a.FirstOrDefault() ?? "unnamed");
         });
-        Console.WriteLine("[db-smoke] ready. Run: db-smoke <label> [connector-bundle]");
+        re.Con.RegisterCommand("db-smoke-mutation", a =>
+        {
+            if (a.Count() > 1) Db.Bundle = a.ElementAt(1);
+            Begin(a.FirstOrDefault() ?? "unnamed", mutation: true);
+        });
+        Console.WriteLine("[db-smoke] ready. Run: db-smoke <label> [connector-bundle] or db-smoke-mutation <label> [connector-bundle]");
     }
 
-    static void Begin(string name)
+    static void Begin(string name, bool mutation = false)
     {
         if (running) { Console.WriteLine("[db-smoke] a run is already in progress"); return; }
-        label = name; steps = Build(); index = 0; passed = 0; running = true;
+        label = name; steps = mutation ? BuildMutation() : Build(); index = 0; passed = 0; running = true;
         Console.WriteLine($"[db-smoke] START {label} ({steps.Count} steps)");
         Next();
     }
